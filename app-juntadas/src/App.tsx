@@ -673,20 +673,64 @@ const App = () => {
     const MainContent = () => {
         const [currentPlan, setCurrentPlan] = useState<null | number>(null)
         const selectedPlan = sortedPlans.find(p => p.id === currentPlan);
+        const [filter, setFilter] = useState<{ key: "rating" | "precio"; direction: "asc" | "desc" }>({
+          key: "rating",
+          direction: "desc",
+        });
+    
+        const sortedSugerencias = [...sugerenciasData].sort((a, b) => {
+          let valA: number;
+          let valB: number;
+        
+          if (filter.key === "precio") {
+            // Quitar símbolos y convertir a número
+            valA = parseFloat(a.precio.replace(/[^0-9.-]+/g, ""));
+            valB = parseFloat(b.precio.replace(/[^0-9.-]+/g, ""));
+          } else {
+            valA = a.rating;
+            valB = b.rating;
+          }
+        
+          return filter.direction === "asc" ? valA - valB : valB - valA;
+        });
         // --- VISTA SUGERENCIAS (CONTENIDO INTEGRADO) ---
         if (currentView === 'suggestions') {
             return (
                 <div className="p-4 space-y-4" style={{ backgroundColor: customStyle.appContainer.backgroundColor }}>
+                    <div className="flex text-white items-center gap-2">
+                        Ordenar por:
+                        <select
+                            value={filter.key}
+                            onChange={(e) =>
+                                setFilter((prev) => ({ ...prev, key: e.target.value }))
+                            }
+                            className="bg-gray-800 text-gray-200 text-xs rounded-md p-1 border border-gray-600 focus:outline-none"
+                        >
+                            <option value="stars">Estrellas</option>
+                            <option value="cost">Costo</option>
+                        </select>
+                        
+                        <select
+                            value={filter.direction}
+                            onChange={(e) =>
+                                setFilter((prev) => ({ ...prev, direction: e.target.value }))
+                            }
+                            className="bg-gray-800 text-gray-200 text-xs rounded-md p-1 border border-gray-600 focus:outline-none"
+                        >
+                            <option value="asc">Ascendente</option>
+                            <option value="desc">Descendente</option>
+                        </select>
+                    </div>
                     {/* Encabezado fijo para la vista de sugerencias */}
                     <div className="text-xs uppercase font-bold text-gray-400 border-b border-gray-700 pb-2 px-2 sticky top-0 z-10" style={{backgroundColor: customStyle.appContainer.backgroundColor}}>
                         <span>Planes Recomendados</span>
                     </div>
 
                     {/* Renderizado de la lista de sugerencias */}
-                    {sugerenciasData.map((sug) => (
+                    {sortedSugerencias.map((sug) => (
                         <SugerenciaCard key={sug.id} sugerencia={sug} />
                     ))}
-                    {sugerenciasData.length === 0 && (
+                    {sortedSugerencias.length === 0 && (
                         <div className="text-center text-gray-500 mt-10 p-4">
                             No hay sugerencias disponibles en este momento.
                         </div>
