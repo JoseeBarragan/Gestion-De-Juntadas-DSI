@@ -36,12 +36,12 @@ const PlanDetail = ({ plan, onBack }) => {
             <div className="bg-gray-800 rounded-xl p-5 shadow-lg border border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-100 mb-2">{plan.what}</h2>
                 <p className="text-sm text-gray-400 mb-4">
-                    {new Date(plan.date).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    {new Date(`${plan.date}T00:00:00`).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
 
                 <div className="text-gray-300 text-sm space-y-2">
                     <p><strong>Descripción:</strong> {plan.description || 'Sin descripción.'}</p>
-                    <p><strong>Participantes:</strong> {plan.people || 0}</p>
+                    <p><strong>Participantes:</strong> {plan.people.legth || 0}</p>
                     <p><strong>Costo total:</strong> {formatCurrency(plan.cost)}</p>
                 </div>
 
@@ -52,7 +52,7 @@ const PlanDetail = ({ plan, onBack }) => {
                             {plan.people.map((p) => (
                                 <li key={p.id} className="flex justify-between text-gray-200 text-sm bg-gray-700/50 px-3 py-2 rounded-lg">
                                     <span>{p.name}</span>
-                                    <span>{formatCurrency(plan.cost)} ({p.percentage || 0}%)</span>
+                                    <span>{formatCurrency(p.cost)} ({p.percentage || 0}%)</span>
                                 </li>
                             ))}
                         </ul>
@@ -84,9 +84,15 @@ const initialPlans = [
     time: '13:00', 
     what: 'Asado Funes', 
     location: 'Casa de Funes', 
-    people: 5, 
     cost: 10000,
-    description: 'Reunión en la casa de Funes para hacer un asado con amigos. Cada uno lleva bebida y algo para picar. Se arranca al mediodía y se termina tarde.'
+    description: 'Reunión en la casa de Funes para hacer un asado con amigos. Cada uno lleva bebida y algo para picar. Se arranca al mediodía y se termina tarde.',
+    people: [
+      { name: 'Organizador', cost: 4000, percentage: 40 },
+      { name: 'Invitado 1', cost: 2000, percentage: 20 },
+      { name: 'Invitado 2', cost: 2000, percentage: 20 },
+      { name: 'Invitado 3', cost: 1000, percentage: 10 },
+      { name: 'Invitado 4', cost: 1000, percentage: 10 },
+    ]
   },
   { 
     id: 2, 
@@ -94,9 +100,12 @@ const initialPlans = [
     time: '08:00', 
     what: 'Viaje a la Costa', 
     location: 'Mar del Plata', 
-    people: 2, 
     cost: 8000,
-    description: 'Escapada de fin de semana a Mar del Plata. Incluye combustible, alojamiento y comidas. Plan ideal para desconectarse y relajarse frente al mar.'
+    description: 'Escapada de fin de semana a Mar del Plata. Incluye combustible, alojamiento y comidas. Plan ideal para desconectarse y relajarse frente al mar.',
+    people: [
+      { name: 'Organizador', cost: 4000, percentage: 50 },
+      { name: 'Invitado 1', cost: 4000, percentage: 50 },
+    ]
   },
   { 
     id: 3, 
@@ -104,9 +113,13 @@ const initialPlans = [
     time: '21:00', 
     what: 'Cena con Amigos', 
     location: 'Casa de Franco', 
-    people: 8, 
     cost: 9000,
-    description: 'Cena en casa de Franco con todo el grupo. Se pide pizza y empanadas, con postre casero y sobremesa larga. Noche de charla y risas.'
+    description: 'Cena en casa de Franco con todo el grupo. Se pide pizza y empanadas, con postre casero y sobremesa larga. Noche de charla y risas.',
+    people: [
+      { name: 'Organizador', cost: 3000, percentage: 33 },
+      { name: 'Invitado 1', cost: 3000, percentage: 33 },
+      { name: 'Invitado 2', cost: 3000, percentage: 33 },
+    ]
   },
   { 
     id: 4, 
@@ -114,9 +127,11 @@ const initialPlans = [
     time: '17:30', 
     what: 'Regalo Cumpleaños', 
     location: 'Shopping Alto Rosario', 
-    people: 1, 
     cost: 15000,
-    description: 'Compra del regalo para el cumpleaños de Sofi. Se decidió comprarle un perfume y una caja de bombones premium en el shopping.'
+    description: 'Compra del regalo para el cumpleaños de Sofi. Se decidió comprarle un perfume y una caja de bombones premium en el shopping.',
+    people: [
+      { name: 'Organizador', cost: 15000, percentage: 100 },
+    ]
   },
   { 
     id: 5, 
@@ -124,11 +139,19 @@ const initialPlans = [
     time: '20:00', 
     what: 'Partido de Fútbol', 
     location: 'Cancha El Fortín', 
-    people: 10, 
     cost: 20000,
-    description: 'Alquiler de cancha 8 para jugar con los chicos del laburo. Incluye gaseosas, picada y reserva del turno nocturno.'
+    description: 'Alquiler de cancha 8 para jugar con los chicos del laburo. Incluye gaseosas, picada y reserva del turno nocturno.',
+    people: [
+      { name: 'Organizador', cost: 4000, percentage: 20 },
+      { name: 'Invitado 1', cost: 4000, percentage: 20 },
+      { name: 'Invitado 2', cost: 4000, percentage: 20 },
+      { name: 'Invitado 3', cost: 4000, percentage: 20 },
+      { name: 'Invitado 4', cost: 4000, percentage: 20 },
+    ]
   },
 ];
+
+
 
 // Datos para la lista de "Sugerencias"
 const sugerenciasData = [
@@ -395,11 +418,13 @@ const NewPlanForm = ({ closeModal }) => {
         id: storedPlans.length + 1,
         date: plan.date,
         what: plan.title,
-        people: participants.length,
         cost: participants.reduce((total, p) => total + Number(p.cost || 0), 0),
         description: plan.description,
         location: plan.place,
-        time: plan.time
+        time: plan.time,
+        people: participants.map((p) => {
+            return {name: p.name, cost: p.cost, percentage: p.percentage}
+        }),
       };
 
       // Agregar el nuevo plan al array existente
@@ -612,10 +637,10 @@ const App = () => {
     );
 
     // Icono de Gente y Moneda (combinación para la columna 'Quienes')
-    const PeopleCostIcon = ({ people, cost }: {people: number, cost: number}) => (
+    const PeopleCostIcon = ({ people, cost }: {people: [], cost: number}) => (
         <div className="flex items-center space-x-1 flex-col">
             <div className='flex items-center'>
-              <span className="font-semibold text-gray-300 mr-1">{people}</span>
+              <span className="font-semibold text-gray-300 mr-1">{people.length}</span>
               {/* Ícono de Gente */}
               <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-7 8a4 4 0 00-4 4v2h14v-2a4 4 0 00-4-4H9z" />
@@ -749,7 +774,7 @@ const App = () => {
                     >
                         {/* Cuándo */}
                         <div className="text-sm font-semibold text-gray-100 flex flex-col">
-                            <span>{new Date(plan.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                            <span>{new Date(`${plan.date}T00:00:00`).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>
                             <span className="text-xs text-gray-500 font-normal">{new Date(plan.date).getFullYear()}</span>
                         </div>
 
