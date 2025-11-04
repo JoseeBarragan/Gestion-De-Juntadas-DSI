@@ -41,7 +41,7 @@ const PlanDetail = ({ plan, onBack }) => {
 
                 <div className="text-gray-300 text-sm space-y-2">
                     <p><strong>Descripción:</strong> {plan.description || 'Sin descripción.'}</p>
-                    <p><strong>Participantes:</strong> {plan.people.legth || 0}</p>
+                    <p><strong>Participantes:</strong> {plan.people.length || 0}</p>
                     <p><strong>Costo total:</strong> {formatCurrency(plan.cost)}</p>
                 </div>
 
