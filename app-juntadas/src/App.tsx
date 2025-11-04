@@ -1,6 +1,10 @@
 import React, { useState, useMemo } from 'react';
+// Importamos los íconos de Lucide que necesitan las tarjetas de sugerencia
+import { Star, MapPin } from 'lucide-react';
 
-// Datos simulados para la lista de planes
+// --- DATOS SIMULADOS ---
+
+// Datos para la lista de "Tus Planes"
 const initialPlans = [
     { id: 1, date: '2025-10-17', what: 'Asado Funes', people: 5, cost: '$$' },
     { id: 2, date: '2025-11-05', what: 'Viaje a la Costa', people: 2, cost: '$$$' },
@@ -8,6 +12,36 @@ const initialPlans = [
     { id: 4, date: '2025-12-01', what: 'Regalo Cumpleaños', people: 1, cost: '$$' },
     { id: 5, date: '2025-09-30', what: 'Partido de Fútbol', people: 10, cost: '$' },
 ];
+
+// Datos para la lista de "Sugerencias" (del archivo anterior)
+const sugerenciasData = [
+    {
+      id: 1,
+      rating: 4.8,
+      titulo: "Asado Funes",
+      precio: "$100.000",
+      ubicacion: "Funes",
+      descripcion: "Plan nocturno con amigos. Comenzamos con una picada y unas cervezas, luego matambre a la pizza y terminamos la noche jugando al Truco."
+    },
+    {
+      id: 2,
+      rating: 4.5,
+      titulo: "Cena Italiana",
+      precio: "$75.000",
+      ubicacion: "Rosario Centro",
+      descripcion: "Noche de pastas caseras. Ideal para una cita. Incluye entrada, plato principal de ñoquis o ravioles, postre y una botella de vino."
+    },
+    {
+      id: 3,
+      rating: 4.2,
+      titulo: "Tarde de Merienda",
+      precio: "$30.000",
+      ubicacion: "Pichincha",
+      descripcion: "Café de especialidad con tortas artesanales. Perfecto para una tarde tranquila de lectura o trabajo. Incluye infusión y porción de torta."
+    }
+];
+
+// --- COMPONENTES AUXILIARES (DE AMBOS ARCHIVOS) ---
 
 // Icono de flecha para indicar la dirección de ordenamiento
 const SortArrowIcon = ({ direction }: {direction: string}) => (
@@ -23,8 +57,66 @@ const SortArrowIcon = ({ direction }: {direction: string}) => (
     </svg>
 );
 
+// Componente para Estrellas (de SugerenciasApp.jsx)
+const StarRating = ({ rating }) => {
+  const totalStars = 5;
+  const fullStars = Math.floor(rating);
 
-// Componente principal
+  return (
+    <div className="flex items-center">
+      {[...Array(totalStars)].map((_, i) => (
+        <Star
+          key={i}
+          className={`w-5 h-5 ${
+            i < fullStars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+          }`}
+          strokeWidth={1.5}
+        />
+      ))}
+      <span className="ml-2 text-lg font-bold text-gray-700">{rating}</span>
+    </div>
+  );
+};
+
+// Componente Tarjeta de Sugerencia (de SugerenciasApp.jsx)
+// (Modificado para no tener max-w-md o mx-auto, ya que estará en una lista)
+const SugerenciaCard = ({ sugerencia }) => {
+  return (
+    <div className="bg-white rounded-2xl shadow-lg p-5 w-full border border-gray-200">
+      {/* Calificación y estrellas */}
+      <div className="mb-2">
+        <StarRating rating={sugerencia.rating} />
+      </div>
+
+      {/* Título y Precio */}
+      <div className="flex justify-between items-start mb-2">
+        <h2 className="text-2xl font-bold text-gray-900">{sugerencia.titulo}</h2>
+        <span className="text-lg font-semibold text-green-600">{sugerencia.precio}</span>
+      </div>
+
+      {/* Ubicación */}
+      <div className="flex items-center text-gray-500 mb-4">
+        <MapPin className="w-4 h-4 mr-1" strokeWidth={2} />
+        <span>{sugerencia.ubicacion}</span>
+      </div>
+
+      {/* Descripción */}
+      <p className="text-gray-700 text-sm leading-relaxed mb-4">
+        {sugerencia.descripcion}
+      </p>
+
+      {/* Acción de Duplicar */}
+      <div className="flex justify-end">
+        <button className="text-sm font-medium text-blue-600 hover:underline">
+          Duplicar
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+// --- COMPONENTE PRINCIPAL (APP FUSIONADA) ---
 const App = () => {
     // Estado para el ordenamiento: 'key-direction' (ej: 'date-asc')
     const [sortBy, setSortBy] = useState('date-asc'); 
@@ -54,7 +146,7 @@ const App = () => {
     // ------------------------------------------------
 
     // Función para manejar el clic en los encabezados de columna
-    const handleHeaderClick = (key) => {
+    const handleHeaderClick = (key : any) => {
         if (currentView !== 'plans') return; // Solo permitir ordenar en la vista de planes
 
         const [currentKey, currentDirection] = sortBy.split('-');
@@ -62,12 +154,9 @@ const App = () => {
         let newDirection = 'asc';
         const newKey = key;
 
-        // Si se pulsa la misma columna, se alterna la dirección.
         if (currentKey === key) {
             newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
         } else {
-            // Si se pulsa una columna diferente, se reinicia la dirección a ascendente por defecto.
-            // Para 'people' o 'cost', el orden ascendente es 'menor a mayor' (más barato/menos gente).
             newDirection = (key === 'people' || key === 'cost') ? 'asc' : 'asc';
         }
 
@@ -83,23 +172,20 @@ const App = () => {
             let comparison = 0;
 
             if (key === 'date') {
-                // Comparación por Fecha (YYYY-MM-DD)
                 comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
             } else if (key === 'name') {
-                // Comparación por Nombre (alfabético)
                 comparison = a.what.localeCompare(b.what);
             } else if (key === 'people') {
-                // Comparación por Número de Personas (numérico)
                 comparison = a.people - b.people;
             } else if (key === 'cost') {
-                // Comparación por Costo (basado en longitud de $)
                 comparison = a.cost.length - b.cost.length;
             }
 
-            // Aplicar dirección de ordenamiento
             return direction === 'desc' ? comparison * -1 : comparison;
         });
     }, [sortBy]);
+
+    // --- ICONOS INLINE (de la App de Gestión) ---
 
     // Icono de Candado (Bloqueado/Tus Planes)
     const LockIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -120,7 +206,6 @@ const App = () => {
     const PeopleCostIcon = ({ people, cost }: {people: number, cost: string}) => (
         <div className="flex items-center space-x-1 justify-end">
             <span className="font-semibold text-gray-700 mr-1">{people}</span>
-            {/* Icono de Persona (simulando el ícono de gente) */}
             <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h-10A2 2 0 015 18v-2a4 4 0 014-4h6a4 4 0 014 4v2a2 2 0 01-2 2zM12 14V8m0 0V4"></path>
                 <circle cx="12" cy="7" r="3" fill="currentColor" stroke="none" />
@@ -134,10 +219,10 @@ const App = () => {
         primaryBlue: '#4c7cff',
         secondaryGray: '#e0e0e0',
         darkText: '#333333',
-        sketchTitle: { fontSize: '2rem', fontWeight: 700 }, // Título un poco más grande
+        sketchTitle: { fontSize: '2rem', fontWeight: 700 },
         appContainer: {
-            maxWidth: '390px', // Tamaño de celular realista
-            height: '800px',  // Altura fija y realista
+            maxWidth: '390px',
+            height: '800px', 
             boxShadow: '0 4px 30px rgba(0, 0, 0, 0.25)',
             borderRadius: '40px', 
             border: '10px solid #222222', 
@@ -150,19 +235,27 @@ const App = () => {
 
     // Contenido principal (Planes o Sugerencias)
     const MainContent = () => {
+        
+        // --- VISTA SUGERENCIAS (CONTENIDO INTEGRADO) ---
         if (currentView === 'suggestions') {
             return (
-                <div className="p-8 text-center text-gray-500 flex flex-col items-center justify-center h-full">
-                    <BulbIcon className="w-16 h-16 mb-4 text-gray-300" strokeWidth="1.5" />
-                    <h2 className="text-xl font-semibold text-gray-700 mb-2">¡Inspírate!</h2>
-                    <p>Aquí se mostrarían ideas y sugerencias de planes basados en tu historial o ubicación.</p>
+                <div className="p-4 space-y-4" style={{ backgroundColor: customStyle.appContainer.backgroundColor }}>
+                    {/* Encabezado fijo para la vista de sugerencias */}
+                    <div className="text-xs uppercase font-bold text-gray-600 border-b pb-2 px-2 sticky top-0 z-10" style={{backgroundColor: customStyle.appContainer.backgroundColor}}>
+                        <span>Planes Recomendados</span>
+                    </div>
+
+                    {/* Renderizado de la lista de sugerencias */}
+                    {sugerenciasData.map((sug) => (
+                        <SugerenciaCard key={sug.id} sugerencia={sug} />
+                    ))}
                 </div>
             );
         }
 
+        // --- VISTA "TUS PLANES" (CONTENIDO ORIGINAL) ---
         const [activeKey, activeDirection] = sortBy.split('-');
 
-        // Vista de "Tus Planes"
         return (
             <main className="grow overflow-y-auto p-4 space-y-3">
                 
@@ -210,7 +303,6 @@ const App = () => {
                 {sortedPlans.map(plan => (
                     <div 
                         key={plan.id} 
-                        // Sombra más sutil y transición suave al hacer hover
                         className={`${planGridClass} bg-white p-3 rounded-xl shadow-lg cursor-pointer hover:shadow-xl transition duration-150 hover:scale-[1.02] active:scale-[.98] transform`}
                         onClick={() => console.log('Abrir detalle del plan:', plan.id)}
                         role="button"
@@ -218,7 +310,6 @@ const App = () => {
                     >
                         {/* Cuándo */}
                         <div className="text-sm font-semibold text-dark-text flex flex-col">
-                            {/* Formato: 17/Oct */}
                             <span>{new Date(plan.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
                             <span className="text-xs text-gray-500 font-normal">{new Date(plan.date).getFullYear()}</span>
                         </div>
@@ -264,7 +355,6 @@ const App = () => {
                         aria-label="Añadir Nuevo Plan"
                     >
                         Crear Nuevo Plan
-                        {/* Icono de más (Plus) */}
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path>
                         </svg>
@@ -303,17 +393,14 @@ const App = () => {
 
                 {/* 4. MODAL con Transiciones Suaves */}
                 {showModal && (
-                    // Fondo semi-transparente y control de clic fuera
                     <div 
                         className={`fixed inset-0 transition-all duration-${MODAL_TRANSITION_DURATION} flex items-center justify-center p-4 z-50 ${isModalOpen ? 'bg-black/70' : 'bg-black/0'}`}
-                        onClick={closeModal} // Cierra la modal al hacer clic en el fondo
+                        onClick={closeModal}
                     >
-                        {/* Contenido de la Modal con animación de escala y opacidad */}
                         <div 
                             className={`bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm transform transition-all duration-${MODAL_TRANSITION_DURATION} ease-in-out 
                                 ${isModalOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`
                             }
-                            // Evita que el clic en el contenido cierre la modal
                             onClick={(e) => e.stopPropagation()}
                         >
                             <h3 className="text-2xl font-bold mb-4 text-dark-text">¡Crear Plan!</h3>
@@ -335,3 +422,4 @@ const App = () => {
 };
 
 export default App;
+
